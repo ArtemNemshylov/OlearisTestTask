@@ -263,7 +263,7 @@ def main():
     # If logged in, hide Public Form; otherwise show only Public Form
     if not st.session_state.get("token"):
         st.subheader("Submit a Repair Request")
-        with st.form("public_form", clear_on_submit=False):
+        with st.form("public_form", clear_on_submit=True):
             title = st.text_input("Title")
             description = st.text_area("Description")
             client_name = st.text_input("Your Name")
@@ -279,8 +279,8 @@ def main():
                 else:
                     try:
                         data = create_public_ticket(title, description, client_name, client_email)
-                        st.success(f"Created ticket #{data.get('id')}")
-                        st.rerun()  # Clear form after successful submission
+                        st.success(f"✅ Request submitted successfully! Ticket #{data.get('id')} has been created.")
+                        st.balloons()  # Праздничные шарики
                     except Exception as e:
                         if "409" in str(e) or "Conflict" in str(e):
                             st.error("A ticket with the same title, description, and email already exists. Please modify your request.")

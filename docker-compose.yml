@@ -15,7 +15,7 @@ services:
       retries: 5
 
   api:
-    image: ghcr.io/artemnemshylov/mini-crm-repair:latest
+    image: ghcr.io/artemnemshylov/mini-crm-repair:latest@sha256:ba5292fed9ff8c3c612fae1fdd19b289141513fcb37137cbc10c5408b5db8cc6
     depends_on:
       db:
         condition: service_healthy
