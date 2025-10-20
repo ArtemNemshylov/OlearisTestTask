@@ -20,7 +20,7 @@ async def create_user(
     await require_role(current_user, (UserRole.admin,))
     result = await db.execute(select(User).where(User.username == payload.username))
     if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Username already exists")
+        raise HTTPException(status_code=409, detail="Username already exists")
     user = User(username=payload.username, password_hash=hash_password(payload.password), role=payload.role)
     db.add(user)
     await db.commit()
@@ -43,6 +43,10 @@ async def delete_user(
     user_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     await require_role(current_user, (UserRole.admin,))
+    # Check if user exists
+    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     # Reassign tickets: unassign worker and set status to new for admin review
     await db.execute(
         update(Ticket)

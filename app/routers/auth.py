@@ -16,12 +16,12 @@ from ..security import require_role
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=TokenOut)
+@router.post("/login", response_model=TokenOut, status_code=200)
 async def login(payload: LoginIn, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.username == payload.username))
     user = result.scalar_one_or_none()
     if not user or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
     token = create_access_token({"sub": user.username, "role": user.role})
     return TokenOut(access_token=token)
 
@@ -31,11 +31,11 @@ async def me(current_user: User = Depends(get_current_user)):
     return UserOut(id=current_user.id, username=current_user.username, role=current_user.role, created_at=current_user.created_at)
 
 
-@router.post("/token", response_model=TokenOut)
+@router.post("/token", response_model=TokenOut, status_code=200)
 async def token_client_credentials(
-    grant_type: str = Form(...),
-    client_id: str = Form(...),
-    client_secret: str = Form(...),
+    grant_type: str = Form(..., description="OAuth2 grant type"),
+    client_id: str = Form(..., description="OAuth2 client ID"),
+    client_secret: str = Form(..., description="OAuth2 client secret"),
 ):
     if grant_type != "client_credentials":
         raise HTTPException(status_code=400, detail="unsupported_grant_type")

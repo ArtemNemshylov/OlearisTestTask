@@ -12,8 +12,8 @@ class TokenOut(BaseModel):
 
 
 class LoginIn(BaseModel):
-    username: str
-    password: str
+    username: str = Field(..., min_length=1, max_length=50, description="Username")
+    password: str = Field(..., min_length=1, max_length=100, description="Password")
 
 
 class UserBase(BaseModel):
@@ -22,8 +22,8 @@ class UserBase(BaseModel):
 
 
 class UserCreate(BaseModel):
-    username: str
-    password: str
+    username: str = Field(..., min_length=3, max_length=50, description="Username (3-50 characters)")
+    password: str = Field(..., min_length=6, max_length=100, description="Password (6-100 characters)")
     role: UserRole
 
 
@@ -33,9 +33,9 @@ class UserOut(UserBase):
 
 
 class ClientIn(BaseModel):
-    name: str
-    email: EmailStr
-    phone: Optional[str] = None
+    name: str = Field(..., min_length=1, max_length=100, description="Client name")
+    email: EmailStr = Field(..., description="Valid email address")
+    phone: Optional[str] = Field(None, max_length=20, description="Phone number (optional)")
 
 
 class ClientOut(ClientIn):
@@ -44,13 +44,13 @@ class ClientOut(ClientIn):
 
 
 class TicketCreatePublic(BaseModel):
-    title: str
-    description: str
+    title: str = Field(..., min_length=1, max_length=200, description="Ticket title")
+    description: str = Field(..., min_length=1, max_length=1000, description="Ticket description")
     client: ClientIn
 
 
 class TicketAssignIn(BaseModel):
-    worker_id: int
+    worker_id: int = Field(..., gt=0, description="Valid worker ID")
 
 
 class TicketBase(BaseModel):

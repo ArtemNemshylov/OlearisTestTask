@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body
 from sqlalchemy import select, func, update
 from datetime import datetime
 from sqlalchemy.orm import selectinload
@@ -11,9 +11,9 @@ from ..security import get_current_user, require_role
 
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
-@router.get("/stats")
+@router.get("/stats", status_code=200)
 async def tickets_stats(
-    worker_id: int,
+    worker_id: int = Query(..., gt=0, description="Worker ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -37,13 +37,13 @@ async def tickets_stats(
 
 
 
-@router.get("/", response_model=TicketsListOut)
+@router.get("/", response_model=TicketsListOut, status_code=200)
 async def list_tickets(
-    page: int = Query(1, ge=1),
-    size: int = Query(10, ge=1, le=100),
-    search: str | None = None,
-    status: TicketStatus | None = None,
-    worker_id: int | None = None,
+    page: int = Query(1, ge=1, description="Page number (1+)"),
+    size: int = Query(10, ge=1, le=100, description="Page size (1-100)"),
+    search: str | None = Query(None, max_length=100, description="Search by title"),
+    status: TicketStatus | None = Query(None, description="Filter by status"),
+    worker_id: int | None = Query(None, gt=0, description="Filter by worker ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -95,10 +95,10 @@ async def list_tickets(
     return TicketsListOut(items=[to_out(i) for i in items], total=total, page=page, size=size)
 
 
-@router.post("/{ticket_id}/viewed", response_model=TicketOut)
+@router.post("/{ticket_id}/viewed", response_model=TicketOut, status_code=200)
 async def mark_viewed(
-    ticket_id: int,
-    payload: TicketViewedUpdate,
+    ticket_id: int = Path(..., gt=0, description="Ticket ID"),
+    payload: TicketViewedUpdate = Body(..., description="Viewed status update"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -145,10 +145,10 @@ async def mark_viewed(
     )
 
 
-@router.post("/{ticket_id}/assign", response_model=TicketOut)
+@router.post("/{ticket_id}/assign", response_model=TicketOut, status_code=200)
 async def assign_ticket(
-    ticket_id: int,
-    worker_id: int,
+    ticket_id: int = Path(..., gt=0, description="Ticket ID"),
+    worker_id: int = Body(..., gt=0, description="Worker ID"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -208,10 +208,10 @@ async def assign_ticket(
     )
 
 
-@router.post("/{ticket_id}/status", response_model=TicketOut)
+@router.post("/{ticket_id}/status", response_model=TicketOut, status_code=200)
 async def update_status(
-    ticket_id: int,
-    new_status: TicketStatus,
+    ticket_id: int = Path(..., gt=0, description="Ticket ID"),
+    new_status: TicketStatus = Body(..., description="New ticket status"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
